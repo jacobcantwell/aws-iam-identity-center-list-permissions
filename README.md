@@ -1,16 +1,31 @@
 # AWS IAM Identity Center - List Permission Sets and Associated User Permissions
 
-AWS IAM Identity Center - List Permission Sets and Associated User Permissions 
+This project provides examples and sample code to audit AWS IAM identity store at scale.
 
-## Requirements
+With these scripts, you can:
+* Query information about users and groups in IAM Identity Center
+* Find out which users are members of which groups
 
-* Set the AWS credentials in your terminal.
+## Prerequisites
+
+Before you start you should have the following prerequisites:
+* An Organization in AWS Organizations
+* Administrative access to the AWS IAM Identity Center
+* Python version 3.10.5 or later
+* AWS CLI
+
+## Environment Setup
+
+* Clone this repository
+
+```
+git clone https://github.com/jacobcantwell/aws-iam-identity-center-list-permissions
+```
+
+### Set the AWS credentials in your terminal.
  * In your AWS login page, select a role with access to AWS IAM Identity Center
  * Select Command line or programmatic access
  * Set AWS environment variables - e.g. copy code in Option 1 in to your terminal
-* Python 3
-* AWS CLI
-
 
 ## To Run
 
