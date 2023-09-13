@@ -1,6 +1,6 @@
-# AWS IAM Identity Center APIs
+# AWS IAM Identity Center - List Permission Sets and Associated User Permissions
 
-AWS IAM Identity Center - List Permission Sets and Associated User Permissions
+AWS IAM Identity Center - List Permission Sets and Associated User Permissions 
 
 ## Requirements
 
