@@ -4,71 +4,13 @@ import csv
 client = boto3.client('identitystore')
 sso_admin_client = boto3.client('sso-admin')
 
-# write a csv of users
-header = ['IdentityStoreId', 'UserId', 'UserName', 'FamilyName', 'GivenName', 'DisplayName', 'Email', 'GroupId', 'GroupDisplayName']
-with open('list_users.csv', 'w') as f:
-    # create the csv writer
-    writer = csv.writer(f)
-    # write the header
-    writer.writerow(header)
-
-    # lists the IAM Identity Center instances
-    list_instances = sso_admin_client.list_instances()["Instances"]
-
-    # get identity store
-    for instance in list_instances:
-        identityStoreId = instance["IdentityStoreId"]
-        print(f"identityStoreId: {identityStoreId}")
-        # get list of users
-        users = client.list_users(
-            IdentityStoreId=identityStoreId
-        )
-        for user in users["Users"]:
-            print(f"user: {user}")
-            userId = user["UserId"]
-            print(f"userId: {userId}")
-
-            userName = user["UserName"]
-            print(f"userName: {userName}")
-            userFamilyName = user["Name"]["FamilyName"]
-            print(f"userFamilyName: {userFamilyName}")
-            userGivenName = user["Name"]["GivenName"]
-            print(f"userGivenName: {userGivenName}")
-            displayName = user["DisplayName"]
-            print(f"displayName: {displayName}")
-            email = user["Emails"][0]["Value"]
-            print(f"email: {email}")
-
-            group_membership_response = client.list_group_memberships_for_member(
-                IdentityStoreId=identityStoreId,
-                MemberId={
-                    'UserId': userId
-                }
-            )["GroupMemberships"]
-            # print(f"group_membership_response: {group_membership_response}")
-            for group_membership in group_membership_response:
-                groupId = format(group_membership["GroupId"])
-                describe_group_response = client.describe_group(
-                    IdentityStoreId=identityStoreId,
-                    GroupId=groupId,
-                )
-                groupDisplayName = describe_group_response["DisplayName"]
-                print(groupDisplayName)
-
-                data = [identityStoreId, userId, userName, userFamilyName, userGivenName, displayName, email, groupId, groupDisplayName]
-                # write the data
-                writer.writerow(data)
-
-print("****************")
-
 # write a csv of permission sets
-header = ['UserId', 'UserName', 'FamilyName', 'GivenName', 'DisplayName', 'Email', 'AWSAccountIds', 'IdentityStoreId', 'PermissionSetName', 'AttachedManagedPolicies', 'CustomerManagedPolicyReferences', 'GroupDisplayName', ]
+header = ['UserId', 'UserName', 'FamilyName', 'GivenName', 'DisplayName', 'Email', 'AWSAccountId', 'IdentityStoreId', 'PermissionSetName', 'AttachedManagedPolicies', 'CustomerManagedPolicyReferences']
 with open('list_permissions.csv', 'w') as f:
     # create the csv writer
     writer = csv.writer(f)
     # write the header
     writer.writerow(header)
-
 
     # lists the IAM Identity Center instances
     list_instances = sso_admin_client.list_instances()["Instances"]
@@ -132,23 +74,39 @@ with open('list_permissions.csv', 'w') as f:
                     principalId = principal["PrincipalId"]
                     print(f"principalType: {principalType}, principalId: {principalId}")
 
-                    describe_group = client.describe_group(
-                        IdentityStoreId=identityStoreId,
-                        GroupId=principalId
-                    )
-                    group_name = describe_group["DisplayName"]
-                    print(f"group_name: {group_name}")
-
-                    list_group_memberships = client.list_group_memberships(
-                        IdentityStoreId=identityStoreId,
-                        GroupId=principalId
-                    )["GroupMemberships"]
-                    print(f"list_group_memberships: {list_group_memberships}")
-
-                    for member in list_group_memberships:
+                    # process groups
+                    if principalType == "GROUP":
+                        list_group_memberships = client.list_group_memberships(
+                            IdentityStoreId=identityStoreId,
+                            GroupId=principalId
+                        )["GroupMemberships"]
+                        print(f"list_group_memberships: {list_group_memberships}")
+                        for member in list_group_memberships:
+                            userId = member["MemberId"]["UserId"]
+                            print(f"userId: {userId}")
+                            user = client.describe_user(
+                                IdentityStoreId=identityStoreId,
+                                UserId=userId
+                            )
+                            userName = user["UserName"]
+                            print(f"userName: {userName}")
+                            userFamilyName = user["Name"]["FamilyName"]
+                            print(f"userFamilyName: {userFamilyName}")
+                            userGivenName = user["Name"]["GivenName"]
+                            print(f"userGivenName: {userGivenName}")
+                            displayName = user["DisplayName"]
+                            print(f"displayName: {displayName}")
+                            email = user["Emails"][0]["Value"]
+                            print(f"email: {email}")
+                            
+                            data = [userId, userName, userFamilyName, userGivenName, displayName, email, accountId, identityStoreId, permission_set_name, list_managed_policies, list_customer_managed_policy_references]
+                            # write the data
+                            writer.writerow(data)
+                    
+                    elif principalType == "USER":
                         user = client.describe_user(
                             IdentityStoreId=identityStoreId,
-                            UserId=member["MemberId"]["UserId"]
+                            UserId=principalId
                         )
                         userName = user["UserName"]
                         print(f"userName: {userName}")
@@ -161,8 +119,6 @@ with open('list_permissions.csv', 'w') as f:
                         email = user["Emails"][0]["Value"]
                         print(f"email: {email}")
                         
-                        # header = ['IdentityStoreId', 'PermissionSetName', 'AttachedManagedPolicies', 'CustomerManagedPolicyReferences', 'AWSAccountId', 'GroupDisplayName', 'UserId', 'UserName', 'FamilyName', 'GivenName', 'DisplayName', 'Email']
-                        data = [userId, userName, userFamilyName, userGivenName, displayName, email, accountId, identityStoreId, permission_set_name, list_managed_policies, list_customer_managed_policy_references, groupDisplayName]
+                        data = [principalId, userName, userFamilyName, userGivenName, displayName, email, accountId, identityStoreId, permission_set_name, list_managed_policies, list_customer_managed_policy_references]
                         # write the data
                         writer.writerow(data)
-
