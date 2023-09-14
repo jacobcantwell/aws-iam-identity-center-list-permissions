@@ -214,3 +214,4 @@ with open('results-' + curr_date + '.csv', 'w') as f:
                 print('groupname is: ' + group_name)
                 query_ddb_to_populate_report(user_name, group_id, group_name, 'GROUP', iam_permissions_table, INSTANCE_ARN, writer)
 
+
