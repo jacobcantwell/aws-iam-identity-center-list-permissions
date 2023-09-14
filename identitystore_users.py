@@ -4,8 +4,7 @@ import csv
 client = boto3.client('identitystore')
 sso_admin_client = boto3.client('sso-admin')
 
-
-
+# get policies
 def getPolicies(instanceArn, permission_set):
     # list_managed_policies_in_permission_set
     list_managed_policies_in_permission_set = sso_admin_client.list_managed_policies_in_permission_set(
@@ -116,8 +115,6 @@ def getGroupMembershipsForMember(identityStoreId, userId):
     )["GroupMemberships"]
     return group_memberships
 
-
-
 # make a list of users
 users = []
 # groups
@@ -167,9 +164,18 @@ for instance in list_instances:
                         userName, userFamilyName, userGivenName, displayName, email = getUserDetails(identityStoreId, userId)
                 elif principalType == "USER":
                     groupId = "NoGroupId"
+                    groups.append({
+                        "groupId": groupId,
+                        "accountId": accountId,
+                        "instanceArn": instanceArn,
+                        "identityStoreId": identityStoreId,
+                        "permission_set": permission_set
+                    })
                     userId = principalId
                     userName, userFamilyName, userGivenName, displayName, email = getUserDetails(identityStoreId, userId)
                 users.append([method, userId, userName, userFamilyName, userGivenName, displayName, email, groupId, accountId, identityStoreId, permission_set_name, list_managed_policies, list_customer_managed_policy_references, inline_policy_for_permission_set])
+
+print(f"groups: {groups}")
 
 
 # get identity store
@@ -186,6 +192,9 @@ for instance in list_instances:
         userId = user["UserId"]
         print(f"userId: {userId}")
         userName, userFamilyName, userGivenName, displayName, email = getUserDetails(identityStoreId, userId)
+        # write the data
+        users.append([method, userId, userName, userFamilyName, userGivenName, displayName, email])
+
         # get users groups
         group_memberships = getGroupMembershipsForMember(identityStoreId, userId)
         # loop through groups
